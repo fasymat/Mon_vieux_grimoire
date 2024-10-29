@@ -1,3 +1,4 @@
+const { error } = require("console");
 const Book = require("../models/book");
 const fs = require("fs");
 
@@ -97,4 +98,41 @@ exports.getAllBooks = (req, res, next) => {
         error: error,
       });
     });
+};
+
+exports.rateBook = async (req, res, next) => {
+  try {
+    const rate = req.body.rating;
+    const userId = req.body.userId;
+    const book = await Book.findById(req.params.id);
+    const userRated = book.ratings.find((rate) => rate.UserId === userId); //test si deja noté par user
+    if (userRated) {
+      return res
+        .status(400)
+        .json({ message: "Vous avez deja noté ce livre !" });
+    }
+    console.log(book._id);
+    book.ratings.push({ userId, grade: rate, bookId: book._id });
+    const totalRate = book.ratings.length;
+    const sumRate = book.ratings.reduce((acc, rate) => acc + rate.grade, 0);
+    book.averageRating = sumRate / totalRate;
+    await book.save();
+    res.status(201).json({ message: "Livre noté !" });
+  } catch (error) {
+    res.status(400).json({ message: "erreur lors de la notation" });
+  }
+};
+
+exports.getBestRatedBook = async (req, res, next) => {
+  try {
+    const books = await Book.find();
+    const bestRatedBooks = books
+      .sort((a, b) => b.averageRating - a.averageRating)
+      .slice(0, 3);
+    res.status(200).json(bestRatedBooks);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "erreur lors de la recuparation des livres" });
+  }
 };
