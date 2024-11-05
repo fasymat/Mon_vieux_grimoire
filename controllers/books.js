@@ -115,9 +115,12 @@ exports.rateBook = async (req, res, next) => {
     book.ratings.push({ userId, grade: rate, bookId: book._id });
     const totalRate = book.ratings.length;
     const sumRate = book.ratings.reduce((acc, rate) => acc + rate.grade, 0);
-    book.averageRating = sumRate / totalRate;
+    book.averageRating = (sumRate / totalRate).toFixed(2);
     await book.save();
-    res.status(201).json({ message: "Livre noté !" });
+    res.status(200).json({
+      message: "Livre noté !",
+      averageRating: book.averageRating,
+    });
   } catch (error) {
     res.status(400).json({ message: "erreur lors de la notation" });
   }

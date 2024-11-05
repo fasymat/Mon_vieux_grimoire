@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
@@ -6,10 +7,7 @@ const bookRoutes = require("./routes/book");
 const userRoutes = require("./routes/user");
 
 mongoose
-  .connect(
-    "mongodb+srv://fasymat:L0jXqgYMqAUVH5p6@cluster0.bh7xp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
+  .connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
