@@ -1,4 +1,3 @@
-const { error } = require("console");
 const Book = require("../models/book");
 const fs = require("fs");
 
@@ -6,6 +5,7 @@ exports.createBook = (req, res, next) => {
   const bookObject = JSON.parse(req.body.book);
   delete bookObject._id;
   delete bookObject._userId;
+  console.log("Uploaded file:", req.file);
   const book = new Book({
     ...bookObject,
     userId: req.auth.userId,
@@ -105,13 +105,12 @@ exports.rateBook = async (req, res, next) => {
     const rate = req.body.rating;
     const userId = req.body.userId;
     const book = await Book.findById(req.params.id);
-    const userRated = book.ratings.find((rate) => rate.UserId === userId); //test si deja noté par user
+    const userRated = book.ratings.find((rate) => rate.UserId === userId);
     if (userRated) {
       return res
         .status(400)
         .json({ message: "Vous avez deja noté ce livre !" });
     }
-    console.log(book._id);
     book.ratings.push({ userId, grade: rate, bookId: book._id });
     const totalRate = book.ratings.length;
     const sumRate = book.ratings.reduce((acc, rate) => acc + rate.grade, 0);
