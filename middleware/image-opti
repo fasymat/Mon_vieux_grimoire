@@ -1,4 +1,5 @@
 const sharp = require("sharp");
+const fs = require("fs");
 const path = require("path");
 
 const optimizeImage = (req, res, next) => {
@@ -6,20 +7,49 @@ const optimizeImage = (req, res, next) => {
     return next();
   }
 
-  const imagePath = path.join(__dirname, "../images", req.file.filename);
+  const imagePath = path.join(__dirname, "../images", req.file.filename); // Construit le chemin complet de l'image en utilisant le nom de fichier fourni dans la requête.
+  const outputPath = imagePath.replace(path.extname(imagePath), ".webp"); // Modifie l'extension de l'image pour la remplacer par WEBP
 
-  // Use sharp to optimize the image
-  sharp(imagePath)
-    .resize(800) // Resize to a width of 800px (maintaining aspect ratio)
-    .toFormat("webp", { quality: 80 }) // Convert to JPEG and set quality
-    .toFile(imagePath, (err) => {
-      if (err) {
-        console.error("Error processing image:", err);
-        return res.status(500).json({ error: "Error processing image" });
-      }
-      console.log("Image processed and saved:", req.file.filename);
-      next();
-    });
+  try {
+    sharp(imagePath)
+      //modifier la taille de l'image
+      .resize({
+        width: 700,
+        height: 700,
+        fit: sharp.fit.inside, //Utilisation de sharp.fit.inside pour conserver les proportions
+        withoutEnlargement: true,
+      })
+
+      .webp({ quality: 80, lossless: false }) // modifier la qualite de l'image et utilisation du Mode lossless: false pour une compression avec perte
+      .toFile(outputPath, (err) => {
+        if (err) {
+          console.error("Erreur de traitement d'image:", err);
+          return res
+            .status(500)
+            .json({ error: "Erreur de traitement d'image" });
+        }
+
+        // Supprimer l'image originale avec fs synchrone
+        try {
+          fs.unlinkSync(imagePath);
+        } catch (unlinkError) {
+          console.warn(
+            "Impossible de supprimer le fichier original:",
+            unlinkError
+          );
+        }
+
+        // Modifier le nom de fichier dans la requête
+        req.file.filename = path.basename(outputPath);
+        req.file.path = outputPath;
+        req.file.mimetype = "image/webp";
+
+        next();
+      });
+  } catch (error) {
+    console.error("Erreur de traitement d'image:", error);
+    return res.status(500).json({ error: "Erreur de traitement d'image" });
+  }
 };
 
 module.exports = optimizeImage;

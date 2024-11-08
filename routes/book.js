@@ -3,7 +3,7 @@ const router = express.Router();
 
 const auth = require("../middleware/auth");
 const multer = require("../middleware/multer-config");
-const imageOptimizer = require("../middleware/image-opti"); // Ensure the path is correct
+const imageOptimizer = require("../middleware/image-opti");
 
 const bookCtrl = require("../controllers/books");
 
